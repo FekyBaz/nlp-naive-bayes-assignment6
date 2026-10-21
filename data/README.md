@@ -1,7 +1,11 @@
-# Dataset
+# Dataset folder
 
-Place the course-provided `synthetic_text_data.csv` in this folder.
+The dataset is committed at the repository root as
+`../synthetic_text_data.csv`; that is the copy used by the notebook by default.
 
-Expected columns: `text` and `label`.
+This folder is optional. If you place a copy of `synthetic_text_data.csv` here,
+the notebook will prefer `data/synthetic_text_data.csv` because it checks this
+path first.
 
-The CSV has not yet been uploaded because it was not attached in the conversation.
+Expected columns: `text` and `label`. The committed dataset has 85 sentences in
+four classes: Entertainment, Politics, Sports, and Technology.

@@ -1,6 +1,9 @@
-numpy
-pandas
-matplotlib
-seaborn
-scikit-learn
-wordcloud
+numpy>=1.26
+pandas>=2.0
+matplotlib>=3.8
+seaborn>=0.13
+scikit-learn>=1.3
+wordcloud>=1.9.3
+ipykernel>=6.29
+nbconvert>=7.16
+notebook>=7.2
