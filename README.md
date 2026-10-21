@@ -1,22 +1,23 @@
 # NLP Assignment 1 — Naive Bayes Text Classification
 
-This repository contains the Jupyter notebook for the Fall 2026 NLP assignment.
+This repository contains the notebook and dataset for the Fall 2026 NLP assignment.
 
 ## Dataset
 
-The notebook expects `synthetic_text_data.csv` with two columns:
-- `text`: sentence text
-- `label`: category label
-
-Place the CSV in `data/synthetic_text_data.csv`, next to the notebook, or upload it when prompted in Google Colab. The dataset has not yet been added because it was not attached in the conversation.
+The original `synthetic_text_data.csv` is included in the repository root. It contains the `text` and `label` columns.
 
 ## Run in Google Colab
 
 1. Open [assignment_1.ipynb](assignment_1.ipynb).
 2. In Colab, choose **File → Open notebook → GitHub** and enter: https://github.com/FekyBaz/nlp-naive-bayes-assignment6
-3. Run all cells from top to bottom.
-4. Upload `synthetic_text_data.csv` if prompted.
-5. Save the notebook with outputs after it runs successfully.
+3. Select `assignment_1.ipynb` and run all cells from top to bottom. The notebook searches for `synthetic_text_data.csv` in the repository root automatically.
+
+## Run locally
+
+```bash
+pip install -r requirements.txt
+jupyter notebook assignment_1.ipynb
+```
 
 ## Assignment checklist
 
@@ -29,4 +30,6 @@ Place the CSV in `data/synthetic_text_data.csv`, next to the notebook, or upload
 - Comparison with scikit-learn MultinomialNB
 - Train/test accuracy, confusion matrices, precision, recall, and F1 per class
 
-**Important:** The notebook has not been run against the real dataset yet. Do not report metrics until the actual CSV is loaded and the notebook has run successfully.
+## Automated execution
+
+GitHub Actions runs the notebook on pushes to `main` and can also be started manually from the **Actions** tab. A successfully executed notebook is uploaded as an artifact named `executed-nlp-assignment-notebook`. Open the latest run in [Actions](https://github.com/FekyBaz/nlp-naive-bayes-assignment6/actions) to inspect logs and download the notebook with outputs.
