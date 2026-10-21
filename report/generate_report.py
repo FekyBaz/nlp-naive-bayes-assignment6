@@ -242,14 +242,17 @@ def main() -> int:
     class_counts = (
         df["label"].value_counts().reindex(labels).fillna(0).astype(int)
     )
+    train_class_counts = (
+        train_df["label"].value_counts().reindex(labels).fillna(0).astype(int)
+    )
     bars = axes[0].bar(
-        class_counts.index,
-        class_counts.values,
+        train_class_counts.index,
+        train_class_counts.values,
         color=sns.color_palette("deep")[0],
-        label="Full dataset",
+        label="Training set",
     )
     axes[0].bar_label(bars, padding=1, fontsize=7.5)
-    axes[0].set_title("Class distribution (full dataset)")
+    axes[0].set_title("Class distribution (training set)")
     axes[0].set_xlabel("Class")
     axes[0].set_ylabel("Number of sentences")
     axes[0].tick_params(axis="x", rotation=25)
@@ -331,6 +334,9 @@ def main() -> int:
     class_text = ", ".join(
         f"{label} {count}" for label, count in class_counts.items()
     )
+    train_class_text = ", ".join(
+        f"{label} {count}" for label, count in train_class_counts.items()
+    )
 
     css = """
 @page { size: A4; margin: 11mm 12mm 10mm 12mm; }
@@ -403,9 +409,9 @@ sentences and four labels: {class_text}. The file has no missing values, no
 duplicate texts, and no empty sentences. Sentences average {avg_tokens:.0f}
 alphabetic tokens (range {min_tokens}–{max_tokens}). The classes are
 imbalanced: Technology is the largest class and Sports the smallest. Figure 1
-(on page 2) shows the class distribution and the most frequent training words.
-As expected without stopword removal, function words such as “the”, “are”, and
-“to” dominate the frequency ranking.</p>
+(on page 2) shows the training class distribution and the most frequent
+training words. As expected without stopword removal, function words such as
+“the”, “are”, and “to” dominate the frequency ranking.</p>
 
 <h2>2. Preprocessing, split, and vocabulary</h2>
 <p>Each sentence is lowercased and tokenized with the regular expression
@@ -480,8 +486,8 @@ uncertain.</p>
 <div class="figure">
 <img src="{data_uri(fig_data_path)}" alt="Class distribution and top word frequencies">
 </div>
-<p class="caption"><b>Figure 1.</b> Left: class distribution in the full
-dataset ({class_text}). Right: the 15 most frequent tokens in the training
+<p class="caption"><b>Figure 1.</b> Left: class distribution in the training
+split ({train_class_text}). Right: the 15 most frequent tokens in the training
 split. Frequent function words dominate because the assignment's preprocessing
 does not remove stopwords.</p>
 
