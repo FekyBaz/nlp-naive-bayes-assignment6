@@ -126,11 +126,12 @@ def main() -> int:
     word_to_index = {word: i for i, word in enumerate(vocabulary)}
 
     def to_bow(tokens: list[str]) -> np.ndarray:
+        counts = Counter(tokens)
         vector = np.zeros(len(word_to_index), dtype=np.int64)
-        for token in tokens:
-            index = word_to_index.get(token)
+        for word, count in counts.items():
+            index = word_to_index.get(word)
             if index is not None:
-                vector[index] += 1
+                vector[index] = count
         return vector
 
     X_train = np.vstack([to_bow(tokens) for tokens in train_df["tokens"]])
@@ -144,11 +145,15 @@ def main() -> int:
 
     sklearn_model = MultinomialNB(alpha=ALPHA).fit(X_train, y_train)
     sklearn_pred = sklearn_model.predict(X_test)
+    sklearn_train_pred = sklearn_model.predict(X_train)
 
     train_accuracy = accuracy_score(y_train, manual_train_pred)
     test_accuracy = accuracy_score(y_test, manual_pred)
+    sklearn_train_accuracy = accuracy_score(y_train, sklearn_train_pred)
+    sklearn_test_accuracy = accuracy_score(y_test, sklearn_pred)
     n_correct = int((manual_pred == y_test).sum())
     n_test = len(y_test)
+    train_prediction_match = float(np.mean(manual_train_pred == sklearn_train_pred))
     prediction_match = float(np.mean(manual_pred == sklearn_pred))
 
     oov = {
@@ -159,13 +164,41 @@ def main() -> int:
     }
     empty_test_docs = int((X_test.sum(axis=1) == 0).sum())
 
-    # These assertions make the report fail loudly if the data or split changes.
+    # Fixed-data assertions. The repository ships one 85-row synthetic dataset,
+    # so the report fails loudly if the data, split, vocabulary, or metrics change.
+    assert list(df.columns) == ["text", "label", "tokens"], list(df.columns)
+    assert int(df.isna().sum().sum()) == 0
+    assert int(df["text"].duplicated().sum()) == 0
     assert len(df) == 85, len(df)
+    assert df["label"].value_counts().to_dict() == {
+        "Entertainment": 19,
+        "Politics": 21,
+        "Sports": 15,
+        "Technology": 30,
+    }, df["label"].value_counts().to_dict()
+    assert sorted(df["label"].unique()) == LABEL_ORDER, sorted(df["label"].unique())
     assert len(train_df) == 68 and len(test_df) == 17
+    assert train_df["label"].value_counts().to_dict() == {
+        "Entertainment": 15,
+        "Politics": 17,
+        "Sports": 12,
+        "Technology": 24,
+    }, train_df["label"].value_counts().to_dict()
+    assert test_df["label"].value_counts().to_dict() == {
+        "Entertainment": 4,
+        "Politics": 4,
+        "Sports": 3,
+        "Technology": 6,
+    }, test_df["label"].value_counts().to_dict()
+    token_lengths = df["tokens"].map(len)
+    assert (int(token_lengths.min()), round(float(token_lengths.mean()), 6), int(token_lengths.max())) == (8, 12.0, 16)
     assert len(vocabulary) == 391
     assert abs(train_accuracy - 1.0) < 1e-12
+    assert abs(sklearn_train_accuracy - 1.0) < 1e-12
     assert abs(test_accuracy - 14 / 17) < 1e-12
+    assert abs(sklearn_test_accuracy - 14 / 17) < 1e-12
     assert n_correct == 14
+    assert train_prediction_match == 1.0
     assert prediction_match == 1.0
     assert len(oov) == 69
     assert empty_test_docs == 0
@@ -181,6 +214,21 @@ def main() -> int:
     weighted = precision_recall_fscore_support(
         y_test, manual_pred, labels=labels, average="weighted", zero_division=0
     )
+    assert cm.tolist() == [[3, 0, 0, 1], [0, 4, 0, 0], [0, 0, 2, 1], [0, 1, 0, 5]], cm.tolist()
+    assert int(cm.sum()) == 17
+    sklearn_cm = confusion_matrix(y_test, sklearn_pred, labels=labels)
+    assert np.array_equal(cm, sklearn_cm), (cm.tolist(), sklearn_cm.tolist())
+    assert np.allclose(precision, [1.0, 0.8, 1.0, 5 / 7], atol=1e-9), precision
+    assert np.allclose(recall, [0.75, 1.0, 2 / 3, 5 / 6], atol=1e-9), recall
+    assert np.allclose(f1, [6 / 7, 8 / 9, 0.8, 10 / 13], atol=1e-9), f1
+    assert np.allclose(macro[2], 0.8288, atol=1e-4), macro[2]
+    assert np.allclose(weighted[2], 0.8235, atol=1e-4), weighted[2]
+    sk_precision, sk_recall, sk_f1, sk_support = precision_recall_fscore_support(
+        y_test, sklearn_pred, labels=labels, zero_division=0
+    )
+    assert np.allclose(precision, sk_precision) and np.allclose(recall, sk_recall)
+    assert np.allclose(f1, sk_f1) and np.array_equal(support, sk_support)
+
     report_text = classification_report(
         y_test, manual_pred, labels=labels, zero_division=0
     )
@@ -343,8 +391,10 @@ with Laplace smoothing and log-space scoring, then compared with
 scikit-learn's <code>MultinomialNB</code> on exactly the same 68/17 split.
 Both models reach <b>{train_accuracy:.2%} training accuracy</b> and
 <b>{test_accuracy:.2%} test accuracy</b> ({n_correct}/{n_test} correct), and make
-<b>identical predictions</b>. The small test set and the gap between training
-and test accuracy call for cautious interpretation.
+<b>identical predictions on both splits</b> (training agreement
+{train_prediction_match:.0%}, test agreement {prediction_match:.0%}). The small
+test set and the gap between training and test accuracy call for cautious
+interpretation.
 </div>
 
 <h2>1. Dataset</h2>
@@ -394,12 +444,13 @@ expected.</p>
 <tbody>
 <tr><td>Manual Multinomial NB</td><td>{train_accuracy:.4f}</td>
 <td>{test_accuracy:.4f}</td><td>{n_correct}/{n_test}</td></tr>
-<tr><td>scikit-learn MultinomialNB</td><td>{train_accuracy:.4f}</td>
-<td>{test_accuracy:.4f}</td><td>{n_correct}/{n_test}</td></tr>
+<tr><td>scikit-learn MultinomialNB</td><td>{sklearn_train_accuracy:.4f}</td>
+<td>{sklearn_test_accuracy:.4f}</td><td>{n_correct}/{n_test}</td></tr>
 </tbody>
 </table>
 
-<p>Both models produce the same test predictions (agreement
+<p>Both models produce the same predictions (training agreement
+<b>{train_prediction_match:.0%}</b>, test agreement
 <b>{prediction_match:.0%}</b>). The per-class test metrics are therefore
 identical for the two implementations:</p>
 

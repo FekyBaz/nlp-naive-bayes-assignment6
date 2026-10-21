@@ -7,8 +7,8 @@ evaluates both models with charts, confusion matrices, and per-class metrics.
 **Deliverables**
 
 - `assignment_1.ipynb` — clean source notebook (no saved outputs)
-- `assignment_1_executed.ipynb` — the same notebook executed from top to bottom with saved outputs
-- `report/report.pdf` — the required two-page methodology and results report
+- `assignment_1_executed.ipynb` — committed executed notebook (saved outputs and figures)
+- `report/report.pdf` — the required committed two-page methodology and results report
 
 ## Dataset
 
@@ -81,11 +81,12 @@ python -m venv .venv
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 
-python -m jupyter nbconvert --to notebook --execute assignment_1.ipynb \
-    --output assignment_1_executed.ipynb
+python -m jupyter nbconvert --to notebook --execute assignment_1.ipynb --output assignment_1_executed.ipynb
 
 python scripts/validate_notebook.py assignment_1_executed.ipynb
 ```
+
+Both commands are single-line and work in PowerShell, Command Prompt, and bash.
 
 To work interactively instead, run `python -m jupyter notebook
 assignment_1.ipynb` and execute all cells from top to bottom.
@@ -109,12 +110,22 @@ paths, so it can run from the repository root without editing.
 
 - `assignment_1.ipynb` is the clean source file. It is the file GitHub Actions
   executes and the file to edit when changing the analysis.
-- `assignment_1_executed.ipynb` is a saved run with execution counts, printed
-  results, and rendered figures. It is generated from the source notebook and
-  is committed for convenient review and submission.
-- GitHub Actions also uploads its own executed copy as the
-  `executed-nlp-assignment-notebook` artifact on every workflow run (the
-  artifact step uses `if: always()`, so it is retained even if execution fails).
+- `assignment_1_executed.ipynb` is the primary deliverable: a saved run with
+  execution counts, printed results, and rendered figures. It is generated from
+  the source notebook and is **committed to the repository** for review and
+  submission. Open it directly on GitHub or download it.
+- Each successful push to `main` also uploads a temporary backup artifact named
+  `executed-nlp-assignment-notebook`. The artifact contains both
+  `assignment_1_executed.ipynb` and `report/report.pdf`.
+- Artifact retention is **7 days** (`.github/workflows/execute-notebook.yml`
+  sets `retention-days: 7`), so the artifact expires 7 days after the run.
+  Download it before submitting if you want the CI-generated copy; the committed
+  notebook is the durable copy and does not expire.
+- To download the artifact manually: open
+  <https://github.com/FekyBaz/nlp-naive-bayes-assignment6/actions>, click the
+  newest successful **Execute NLP Assignment Notebook** run for `main`, scroll
+  to the **Artifacts** section, and click
+  `executed-nlp-assignment-notebook`.
 
 ## Two-page report
 
@@ -133,8 +144,7 @@ limitations.
 - Print the HTML to PDF with headless Chrome or Edge, for example:
 
   ```bash
-  chrome --headless=new --disable-gpu --no-pdf-header-footer \
-      --print-to-pdf=report/report.pdf report/report.html
+  chrome --headless=new --disable-gpu --no-pdf-header-footer --print-to-pdf=report/report.pdf report/report.html
   ```
 
   The report generator recomputes the models and asserts the verified metrics
@@ -142,14 +152,18 @@ limitations.
 
 ## Validation performed
 
-- The notebook was executed twice from a clean kernel locally; both runs
-  produced the same text metrics and identical figures.
-- `scripts/validate_notebook.py` checks that every code cell has an execution
-  count, no cell contains an error output, all six required figures are
-  rendered, and the key results match the 68/17 split (85 rows, 391 vocabulary
-  words, 14/17 correct, 82.35% test accuracy, identical model predictions).
-- The GitHub Actions workflow executes and validates the notebook on every push
-  to `main` and uploads the executed notebook as an artifact.
+- The notebook was executed from a clean kernel locally; the source and
+  executed notebooks have identical cell sources.
+- `scripts/validate_notebook.py` independently recomputes the preprocessing,
+  68/17 split, 391-word training vocabulary, Counter-based BoW matrices, the
+  from-scratch Naive Bayes model, and the scikit-learn baseline directly from
+  `synthetic_text_data.csv`. It then checks the notebook outputs, README, and
+  committed PDF against those values, plus structure, execution counts, error
+  outputs, required figures, the student ID, and a two-page PDF.
+- The GitHub Actions workflow executes the source notebook with nbconvert,
+  validates the result, verifies that the report generator still reproduces the
+  expected metrics, and uploads the executed notebook and report PDF as a
+  temporary artifact on every successful push to `main`.
 
 Run the validation check with:
 

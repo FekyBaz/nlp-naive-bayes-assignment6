@@ -32,15 +32,20 @@ jobs:
         run: |
           jupyter nbconvert --to notebook --execute assignment_1.ipynb --output assignment_1_executed.ipynb --ExecutePreprocessor.timeout=300
 
-      - name: Validate executed notebook
+      - name: Validate executed notebook and report
         run: |
           python scripts/validate_notebook.py assignment_1_executed.ipynb
 
-      - name: Upload executed notebook
-        if: always()
+      - name: Verify report generator
+        run: |
+          python report/generate_report.py
+
+      - name: Upload executed notebook and report
         uses: actions/upload-artifact@v4
         with:
           name: executed-nlp-assignment-notebook
-          path: assignment_1_executed.ipynb
-          if-no-files-found: warn
+          path: |
+            assignment_1_executed.ipynb
+            report/report.pdf
+          if-no-files-found: error
           retention-days: 7

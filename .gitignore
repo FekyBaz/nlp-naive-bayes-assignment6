@@ -19,6 +19,7 @@ desktop.ini
 .vscode/
 .idea/
 
-# Local logs and temporary files
+# Local logs, archives, and temporary files
 *.log
 *.tmp
+*.zip

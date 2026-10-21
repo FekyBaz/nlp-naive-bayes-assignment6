@@ -55,8 +55,10 @@ with Laplace smoothing and log-space scoring, then compared with
 scikit-learn's <code>MultinomialNB</code> on exactly the same 68/17 split.
 Both models reach <b>100.00% training accuracy</b> and
 <b>82.35% test accuracy</b> (14/17 correct), and make
-<b>identical predictions</b>. The small test set and the gap between training
-and test accuracy call for cautious interpretation.
+<b>identical predictions on both splits</b> (training agreement
+100%, test agreement 100%). The small
+test set and the gap between training and test accuracy call for cautious
+interpretation.
 </div>
 
 <h2>1. Dataset</h2>
@@ -111,7 +113,8 @@ expected.</p>
 </tbody>
 </table>
 
-<p>Both models produce the same test predictions (agreement
+<p>Both models produce the same predictions (training agreement
+<b>100%</b>, test agreement
 <b>100%</b>). The per-class test metrics are therefore
 identical for the two implementations:</p>
 
